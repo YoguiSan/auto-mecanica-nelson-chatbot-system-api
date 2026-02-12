@@ -4,7 +4,7 @@ dotenv.config();
 
 type Config = {
   AI_URL: string,
-  AI_API_KEY: string,
+  GEMINI_API_KEY: string,
   PORT: string | number,
   ENVIRONMENT: string,
   DEBUG: boolean,
@@ -12,7 +12,7 @@ type Config = {
 
 const Config = {
   AI_URL: process.env.AI_TOOL_URL,
-  AI_API_KEY: process.env.AI_TOOL_API_KEY,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   PORT: process.env.PORT,
   ENVIRONMENT: process.env.ENVIRONMENT,
   DEBUG: (
