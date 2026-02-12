@@ -12,7 +12,7 @@ app.get('/status',  (req, res) => {
 app.get('/ai-status', async (req, res) => {
   Logger.debug('Checking for the status of the AI tool...');
 
-  const { status, response } = await GeminiService.ask('This is a request to check the status of our communication. Please respond including the date and time in ISO format');
+  const { status, response } = await GeminiService.status();
 
   res.status(status).send(response);
 });

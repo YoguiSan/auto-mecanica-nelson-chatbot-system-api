@@ -10,7 +10,20 @@ const ai = new GoogleGenAI({
   apiKey,
 } as GoogleGenAIOptions);
 
-const ask = async (contents: string) => {
+const status = async () => {
+  const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
+
+  return ask(content, true);
+};
+
+const ask = async (question: string, ignoreScope?: boolean) => {
+  const scope = ``;
+
+  const contents = ignoreScope
+    ? question
+    : `${scope}
+    ${question}`;
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -30,11 +43,11 @@ const ask = async (contents: string) => {
       response: error,
     };
   }
-
 };
 
 const GeminiService = {
   ask,
+  status,
 }
 
 export default GeminiService;
