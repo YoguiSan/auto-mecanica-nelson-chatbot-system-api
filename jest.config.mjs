@@ -2,10 +2,18 @@
  * For a detailed explanation regarding each configuration property, visit:
  * https://jestjs.io/docs/configuration
  */
+const createDefaultPreset = () => import("ts-jest");
 
-import type {Config} from 'jest';
+const tsJestTransformCfg = createDefaultPreset().transform;
 
-const config: Config = {
+const config = {
+  testEnvironment: "node",
+  transform: {
+    ...tsJestTransformCfg,
+    "^.+\\.ts$": "ts-jest"
+  },
+  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts)$",
+  preset: 'ts-jest',
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 
