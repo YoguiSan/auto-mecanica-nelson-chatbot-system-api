@@ -8,7 +8,7 @@
   "main": "index.ts",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.mjs",
-    "dev": "nodemon .src//index.ts",
+    "dev": "nodemon ./src/index.ts",
     "lint": "npx eslint .",
     "start": "pm2 start ./src/index.ts --name amn-chatbot-system-api --interpreter ts-node --watch",
     "stop": "pm2 stop amn-chatbot-system-api"
