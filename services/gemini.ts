@@ -2,6 +2,15 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../utils/config.ts';
 import useLogger from '../utils/logger.ts';
 
+export type ChatHistoryType = {
+  [chatId: string]: [{
+    agent?: 'user' | 'ai',
+    text?: string,
+  }] | [],
+};
+
+let chatHistory: ChatHistoryType = {};
+
 const Logger = useLogger('Google Gemini Service');
 
 const { GEMINI_API_KEY: apiKey } = Config;
@@ -13,10 +22,10 @@ const ai = new GoogleGenAI({
 const status = async () => {
   const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
 
-  return ask(content, true);
+  return ask(content, undefined, true);
 };
 
-const ask = async (question: string, ignoreScope?: boolean) => {
+const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => {
   const scope = `Scope: you are a mechanic from São Paulo, Brazil.
   The application we're running is for an auto repair shop located in the same city.
   Your job is to answer to simple doubts customers might have, or guide them on possible causes on the issues they report in their cars, and also guide them on the services we offer (listed below).
@@ -28,14 +37,51 @@ const ask = async (question: string, ignoreScope?: boolean) => {
   Our customers are from Brazil, so always respond in Brazilian Portuguese.
   Avoid excessive technical jargons, unless they demonstrate to be familiar with them.
   Available services: yet to be done, please tell them to reach out to us.
+  
+  ${
+    chatId && chatHistory[chatId as string] && chatHistory[chatId as string]!.length > 0
+      ? `
+      This is the chat history so far:
+      ${chatHistory[chatId as string]!.map(({
+        agent,
+        text,
+      }: ChatHistoryType) => `${
+        agent === 'user'
+        ? 'User asked'
+        : 'You replied'
+      }: ${text}
+
+      `)}
+
+      `
+      : 'This chat still has no history, or there was an issue retrieving it.'
+  }
+
   Their question starts below.
 
   `;
 
+  
   const contents = ignoreScope
-    ? question
-    : `${scope}
-    ${question}`;
+  ? question
+  : `${scope}
+  ${question}`;
+  
+  Logger.info(`Query sent to Gemini:
+  
+  ${contents}
+  `);
+
+  if (chatId && !chatHistory[chatId as string]) {
+    chatHistory[chatId as string] = [];   
+  }
+
+  if (chatId) {
+    chatHistory[chatId as string]!.push({
+      agent: 'user',
+      text: question as string,
+    });
+  }
 
   try {
     const response = await ai.models.generateContent({
@@ -45,14 +91,28 @@ const ask = async (question: string, ignoreScope?: boolean) => {
 
     Logger.info(response?.text || 'No response');
 
+    chatHistory[chatId as string]!.push({
+      agent: 'ai',
+      text: response.text as string,
+    });
+
     return {
       status: 200,
+      chatId,
       response,
+      chatHistory: chatHistory[chatId as string] || [],
     };
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
+
+    chatHistory[chatId as string]!.push({
+      agent: 'ai',
+      text: 'Unable to answer due to technical issues.',
+    });
+
     return {
       status: 500,
+      chatId,
       response: error,
     };
   }
