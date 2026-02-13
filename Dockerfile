@@ -4,14 +4,11 @@ FROM node:24-alpine
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy package*.json files to the container
-COPY package*.json ./
+# Copy the application source code to the container
+COPY . .
 
 # Install application dependencies
-RUN npm install
-
-# Copy the rest of the application source code to the container
-COPY . .
+RUN npm install --legacy-peer-deps
 
 # Expose port 3000 to the outside world
 EXPOSE 3000
