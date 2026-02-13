@@ -9,7 +9,7 @@ export type ChatMessage = {
 };
 
 export type ChatHistoryType = {
-  [chatId: string]: ChatMessage[];  // Simple array type
+  [chatId: string]: ChatMessage[];
 };
 
 let chatHistory: ChatHistoryType = {};
