@@ -8,8 +8,10 @@
   "main": "index.ts",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.mjs",
-    "dev": "nodemon ./index.ts",
-    "lint": "npx eslint ."
+    "dev": "nodemon .src//index.ts",
+    "lint": "npx eslint .",
+    "start": "pm2 start ./src/index.ts --name amn-chatbot-system-api --interpreter ts-node --watch",
+    "stop": "pm2 stop amn-chatbot-system-api"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -30,6 +32,7 @@
     "@google/genai": "^1.41.0",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "pm2": "^6.0.14",
     "winston": "^3.19.0"
   },
   "config": {
