@@ -2,11 +2,14 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../utils/config.ts';
 import useLogger from '../utils/logger.ts';
 
+export type ChatMessage = {
+  agent?: 'user' | 'ai';
+  text?: string;
+  error?: string;
+};
+
 export type ChatHistoryType = {
-  [chatId: string]: [{
-    agent?: 'user' | 'ai',
-    text?: string,
-  }] | [],
+  [chatId: string]: ChatMessage[];  // Simple array type
 };
 
 let chatHistory: ChatHistoryType = {};
@@ -45,7 +48,7 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
       ${chatHistory[chatId as string]!.map(({
         agent,
         text,
-      }: ChatHistoryType) => `${
+      }: ChatMessage) => `${
         agent === 'user'
         ? 'User asked'
         : 'You replied'
@@ -108,7 +111,12 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
     chatHistory[chatId as string]!.push({
       agent: 'ai',
       text: 'Unable to answer due to technical issues.',
+      error: error as string,
     });
+
+    if ((error as string).indexOf('You exceeded your current quota') > -1) {
+      Logger.warn('Daily quota exceeded');
+    }
 
     return {
       status: 500,
