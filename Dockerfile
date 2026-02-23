@@ -11,7 +11,7 @@ COPY . .
 RUN npm install --legacy-peer-deps
 
 # Expose port 3000 to the outside world
-EXPOSE 3000
+EXPOSE 4000
 
 # Define the command to run the application
 CMD ["npm", "start"]
