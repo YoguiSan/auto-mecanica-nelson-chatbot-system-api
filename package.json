@@ -10,8 +10,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.mjs",
     "dev": "nodemon ./src/index.ts",
     "lint": "npx eslint .",
-    "start": "pm2 start ./src/index.ts --name amn-chatbot-system-api --interpreter ts-node --watch",
-    "stop": "pm2 stop amn-chatbot-system-api"
+    "start": "pm2-runtime start ./src/index.ts --name amn-chatbot-system-api --interpreter ts-node --watch",
+    "stop": "pm2-runtime stop amn-chatbot-system-api"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
