@@ -16,7 +16,7 @@ let chatHistory: ChatHistoryType = {};
 
 const Logger = useLogger('Google Gemini Service');
 
-const { GEMINI_API_KEY: apiKey } = Config;
+const { GEMINI_API_KEY: apiKey, ADMIN_PHRASE } = Config;
 
 const ai = new GoogleGenAI({
   apiKey,
@@ -36,7 +36,11 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
   Do not give instructions on procedures that require skill or knowledge beyond basic driving experience to perform, as this might risk injuring the driver or damaging their car. Their safety is our top priority. If their issue is something that requires the intervention of a professional mechanic, guide them to reach out to us (they will be using this chat from within our web page).
   You can check on forums or unverified sources, but please alert them that this information is not verified and where it comes from.
   Always remind them that if they lack the required skills or when in doubt, reach out to us or their trusted professional, and if they decide to do the job themselves, they must wear protective gear at all times.
-  If they ask something that has no relation to automotive mechanics, please kindly let them know that this is outside your scope.
+  If they ask something that has no relation to automotive mechanics, please kindly let them know that this is outside your scope. There is an exception to this: if the query includes the following specific text:
+  
+  ${ADMIN_PHRASE}
+  That means it must be one of the developers or employees testing something in production. In this case, you can assist them, but don't provide any credentials or any sensitive information you might have access to; if needed, they'll include inline code to directly print these.
+
   Our customers are from Brazil, so always respond in Brazilian Portuguese.
   Avoid excessive technical jargons, unless they demonstrate to be familiar with them.
   Available services: yet to be done, please tell them to reach out to us.
@@ -63,14 +67,13 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
   Their question starts below.
 
   `;
-
   
   const contents = ignoreScope
-  ? question
-  : `${scope}
-  ${question}`;
+    ? question
+    : `${scope}
+    ${question}`;
   
-  Logger.info(`Query sent to Gemini:
+  Logger.debug(`Query sent to Gemini:
   
   ${contents}
   `);
@@ -87,6 +90,14 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
   }
 
   try {
+    Logger.debug(`
+    Request information: 
+    
+    chatId: ${chatId}
+    query: ${question}
+    chatHistory (in memory): ${JSON.stringify(chatHistory)}
+    `);
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents,
@@ -99,12 +110,16 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
       text: response.text as string,
     });
 
-    return {
+    const fullResponse = {
       status: 200,
       chatId,
       response,
       chatHistory: chatHistory[chatId as string] || [],
     };
+
+    Logger.debug(JSON.stringify(fullResponse));
+
+    return fullResponse;
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 

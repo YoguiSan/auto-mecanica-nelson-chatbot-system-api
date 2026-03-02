@@ -8,6 +8,7 @@ type Config = {
   PORT: string | number,
   ENVIRONMENT: string,
   DEBUG: boolean,
+  ADMIN_PHRASE: string,
 };
 
 const Config = {
@@ -19,6 +20,7 @@ const Config = {
     process.env.ENVIRONMENT !== 'prod'
     && process.env.ENVIRONMENT !== 'production'
   ),
+  ADMIN_PHRASE: process.env.ADMIN_PHRASE,
 };
 
 export default Config;

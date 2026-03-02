@@ -17,16 +17,20 @@ app.get('/gemini/ask', async (req, res) => {
   } else {
     try {
       let sessionId = req.get('chatId');
-  
+
       if (!sessionId) {
         sessionId = simpleSessionId();
       }
 
-      const { status, response, chatId } = await GeminiService.ask(question as string, sessionId as string, false);
+      Logger.debug(`Received chat id: ${sessionId}`);
+
+      const { status, response, chatId, chatHistory } = await GeminiService.ask(question as string, sessionId as string, false);
+
 
       res.status(status).send({
         response,
         chatId,
+        chatHistory,
       });
     } catch (error) {
       Logger.error('Erro na chamada do Gemini', error);
