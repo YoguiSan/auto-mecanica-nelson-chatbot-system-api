@@ -1,13 +1,12 @@
 import app from '../app.ts';
 import useLogger from '../utils/logger.ts';
-import Config from '../utils/config.ts';
+import { PickAgent } from '../services/agents/index.ts';
 
 const Logger = useLogger('Ask Route');
 
-const { AVAILABLE_AIs: AIs} = Config;
+const { ChosenAgentName: chosenAi } = PickAgent('none');
 
 app.get('/ask', async (req, res, next) => {
-  const chosenAi = AIs[Math.floor(Math.random() * AIs.length)];
   const { question } = req.query;
 
   if (!question) {
@@ -16,6 +15,8 @@ app.get('/ask', async (req, res, next) => {
     res.status(400).send('Pergunta curta demais');
   } else {
     try {
+      Logger.debug(`Redirecionando para o agente de IA: ${chosenAi}`);
+
       req.url = `/${chosenAi}/ask`;
 
       next('route');
