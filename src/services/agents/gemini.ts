@@ -16,7 +16,9 @@ const ai = new GoogleGenAI({
   apiKey,
 } as GoogleGenAIOptions);
 
-const { ChosenAgent } = PickAgent('gemini');
+// FIXME: mocked
+// const { ChosenAgent } = PickAgent('gemini');
+const ChosenAgent = 'gemini';
 
 const status = async () => {
   const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
@@ -74,27 +76,34 @@ const ask = async (question: string, {
 
     Logger.info(initialResponse?.text || 'No response');
 
-    const response = await ChosenAgent.ask(question, {
-      chatId,
-      ignoreScope,
-      type: 'review',
-    } as IAskOptions);
-
-        chatHistory[chatId as string]!.push({
-      agent: 'ai',
-      text: response?.text as string,
-    });
-
-    const fullResponse = {
+     const fullResponse = {
       status: 200,
       chatId,
-      response,
+      response: initialResponse,
       chatHistory: chatHistory[chatId as string] || [],
     };
 
-    Logger.debug(JSON.stringify(fullResponse));
+    try {
+      const response = await ChosenAgent.ask(question, {
+        chatId,
+        ignoreScope,
+        type: 'review',
+      } as IAskOptions);
 
-    return fullResponse;
+        chatHistory[chatId as string]!.push({
+        agent: 'ai',
+        text: response?.text as string,
+      });
+
+      fullResponse.response = response;
+    } catch (error) {
+      Logger.error('Erro ao validar resposta com o segundo agente de IA', error);
+    } finally {
+      Logger.debug(JSON.stringify(fullResponse));
+  
+      return fullResponse;
+    }
+
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 

@@ -17,7 +17,7 @@ app.get('/gemini/ask', async (req, res) => {
   } = req.query as IQuery;
 
   if (!question) {
-    res.status(400).send('[Gemini] Nenhuma pergunta foi feita');
+    res.status(400).send('Nenhuma pergunta foi feita');
   }  else if (question && (question as string).length < 3) {
     res.status(400).send('Pergunta curta demais');
   } else {

@@ -4,10 +4,12 @@ import { PickAgent } from '../services/agents/index.ts';
 
 const Logger = useLogger('Ask Route');
 
-const { ChosenAgentName: chosenAi } = PickAgent('none');
+// FIXME: mocked
+// const { ChosenAgentName: chosenAi } = PickAgent('none');
+const chosenAi = 'gemini';
 
 app.get('/ask', async (req, res, next) => {
-  const { question } = req.query;
+  const { question, chatId, ignoreScope } = req.query;
 
   if (!question) {
     res.status(400).send('Nenhuma pergunta foi feita');
@@ -17,7 +19,14 @@ app.get('/ask', async (req, res, next) => {
     try {
       Logger.debug(`Redirecionando para o agente de IA: ${chosenAi}`);
 
-      req.url = `/${chosenAi}/ask`;
+      const queryParams = new URLSearchParams({
+        question: question as string,
+        type: 'question',
+        ...(chatId && { chatId: chatId as string }),
+        ...(ignoreScope && { ignoreScope: ignoreScope as string }),
+      });
+
+      req.url = `/${chosenAi}/ask?${queryParams.toString()}`;
 
       next('route');
     } catch (error) {
