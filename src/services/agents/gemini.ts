@@ -2,26 +2,11 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../../utils/config.ts';
 import useLogger from '../../utils/logger.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
-
-// FIXME: move types to another file
-export type ChatMessage = {
-  agent?: 'user' | 'ai';
-  text?: string;
-  error?: string;
-};
-
-export type IChatHistory = {
-  [chatId: string]: ChatMessage[];
-};
-
-type IAskOptions = {
-  chatId?: string;
-  ignoreScope?: boolean;
-  type?: 'question' | 'review';
-};
-// END OF FIXME
-
-let chatHistory: IChatHistory = {};
+import {
+  chatHistory,
+  PickAgent,
+} from './index.ts';
+import type { IAskOptions } from './types.js';
 
 const Logger = useLogger('Google Gemini Service');
 
@@ -30,6 +15,8 @@ const { GEMINI_API_KEY: apiKey } = Config;
 const ai = new GoogleGenAI({
   apiKey,
 } as GoogleGenAIOptions);
+
+const { ChosenAgent } = PickAgent('gemini');
 
 const status = async () => {
   const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
@@ -80,16 +67,22 @@ const ask = async (question: string, {
     chatHistory (in memory): ${JSON.stringify(chatHistory)}
     `);
 
-    const response = await ai.models.generateContent({
+    const initialResponse = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents,
     });
 
-    Logger.info(response?.text || 'No response');
+    Logger.info(initialResponse?.text || 'No response');
 
-    chatHistory[chatId as string]!.push({
+    const response = await ChosenAgent.ask(question, {
+      chatId,
+      ignoreScope,
+      type: 'review',
+    } as IAskOptions);
+
+        chatHistory[chatId as string]!.push({
       agent: 'ai',
-      text: response.text as string,
+      text: response?.text as string,
     });
 
     const fullResponse = {

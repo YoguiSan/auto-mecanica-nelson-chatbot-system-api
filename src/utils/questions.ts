@@ -1,4 +1,4 @@
-import type { IChatHistory, ChatMessage } from  '../services/gemini.ts';
+import type { IChatHistory, IChatMessage } from  '../services/gemini.ts';
 import Config from './config.ts';
 
 const {
@@ -22,11 +22,10 @@ export const assembleQuestion = (
   {
     chatId,
     chatHistory,
-    type,
+    type = 'question',
   }: IAssembleOptions,
-) => {
-`${type === 'question' ? AI_QUESTION_SCOPE : AI_REVIEW_SCOPE}
-  
+): string => `${type === 'question' ? AI_QUESTION_SCOPE : AI_REVIEW_SCOPE}
+
   ${ADMIN_PHRASE}
   That means it must be one of the developers or employees testing something in production. In this case, you can assist them, but don't provide any credentials or any sensitive information you might have access to; if needed, they'll include inline code to directly print these.
 
@@ -41,7 +40,7 @@ export const assembleQuestion = (
       ${chatHistory[chatId as string]!.map(({
         agent,
         text,
-      }: ChatMessage) => `${
+      }: IChatMessage) => `${
         agent === 'user'
         ? 'User asked'
         : 'You replied'
@@ -56,7 +55,13 @@ export const assembleQuestion = (
   Their question starts below.
 
   ${question}
-  `
-};
+  `;
 
-export const assembleReview = (question: string, chatHistory: IChatHistory) => {
+export const assembleReview = (question: string, {
+  chatId,
+  chatHistory,
+}: IAssembleOptions): string => assembleQuestion(question, {
+  chatId,
+  chatHistory,
+  type: 'review',
+} as IAssembleOptions);
