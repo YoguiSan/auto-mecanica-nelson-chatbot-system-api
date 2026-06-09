@@ -12,7 +12,8 @@
     "lint": "npx eslint .",
     "build": "tsc",
     "start": "pm2-runtime start ecosystem.config.cjs --env production --max-restarts=3",
-    "stop": "pm2-runtime stop amn-chatbot-system-api"
+    "stop": "pm2-runtime stop amn-chatbot-system-api",
+    "set:agent": "mkdir .github & mkdir .github/agents & cp \"../ai-agents/backend/Node.js backend.agent.md\" .github/agents/AGENTS.md"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

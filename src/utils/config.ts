@@ -9,6 +9,10 @@ type Config = {
   ENVIRONMENT: string,
   DEBUG: boolean,
   ADMIN_PHRASE: string,
+  QUESTIONS: {
+    AI_QUESTION_SCOPE: string,
+    AI_REVIEW_SCOPE: string,
+  },
 };
 
 const Config = {
@@ -21,6 +25,13 @@ const Config = {
     && process.env.ENVIRONMENT !== 'production'
   ),
   ADMIN_PHRASE: process.env.ADMIN_PHRASE,
+  QUESTIONS: {
+    AI_QUESTION_SCOPE: process.env.AI_QUESTION_SCOPE,
+    AI_REVIEW_SCOPE: process.env.AI_REVIEW_SCOPE,
+  },
+  AVAILABLE_AIs: [
+    'gemini',
+  ],
 };
 
 export default Config;
