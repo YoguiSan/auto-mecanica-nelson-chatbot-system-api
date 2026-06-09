@@ -14,7 +14,11 @@ export type IAskOptions = {
   type?: 'question' | 'review';
 };
 
+type IAIAgent = {
+  ask: (question: string, options: IAskOptions) => Promise<unknown>;
+  status?: () => Promise<unknown>;
+};
+
 export type IAIAgents = {
-  gemini: () => Promise<typeof import('./gemini.ts')>;
-  groq: () => Promise<typeof import('./groq.ts')>;
+  [key: string]: IAIAgent;
 };

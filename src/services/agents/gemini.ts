@@ -2,10 +2,7 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../../utils/config.ts';
 import useLogger from '../../utils/logger.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
-import {
-  chatHistory,
-  PickAgent,
-} from './index.ts';
+import { chatHistory, updateChatHistory } from './shared.ts';
 import type { IAskOptions } from './types.js';
 
 const Logger = useLogger('Google Gemini Service');
@@ -16,9 +13,22 @@ const ai = new GoogleGenAI({
   apiKey,
 } as GoogleGenAIOptions);
 
-// FIXME: mocked
-// const { ChosenAgent } = PickAgent('gemini');
-const ChosenAgent = 'gemini';
+const chooseAlternativeAgent = async () => {
+  const { AIAgents } = await import('./import.ts');
+  const availableAgentKeys = Object.keys(AIAgents).filter((agent) => agent !== 'gemini');
+
+  if (!availableAgentKeys.length) {
+    return null;
+  }
+
+  const ChosenAgentName = availableAgentKeys[Math.floor(Math.random() * availableAgentKeys.length)]!;
+  const ChosenAgent = AIAgents[ChosenAgentName as keyof typeof AIAgents];
+
+  return {
+    ChosenAgent,
+    ChosenAgentName,
+  };
+};
 
 const status = async () => {
   const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
@@ -49,24 +59,15 @@ const ask = async (question: string, {
   ${contents}
   `);
 
-  if (chatId && !chatHistory[chatId as string]) {
-    chatHistory[chatId as string] = [];   
-  }
-
-  if (chatId) {
-    chatHistory[chatId as string]!.push({
-      agent: 'user',
-      text: question as string,
-    });
-  }
+  updateChatHistory(chatId as string, question, 'user');
 
   try {
     Logger.debug(`
-    Request information: 
-    
-    chatId: ${chatId}
-    query: ${question}
-    chatHistory (in memory): ${JSON.stringify(chatHistory)}
+      Request information: 
+      
+      chatId: ${chatId}
+      query: ${question}
+      chatHistory (in memory): ${JSON.stringify(chatHistory)}
     `);
 
     const initialResponse = await ai.models.generateContent({
@@ -76,44 +77,43 @@ const ask = async (question: string, {
 
     Logger.info(initialResponse?.text || 'No response');
 
-     const fullResponse = {
+    const fullResponse = {
       status: 200,
       chatId,
-      response: initialResponse,
+      response: initialResponse.text,
       chatHistory: chatHistory[chatId as string] || [],
     };
 
-    try {
-      const response = await ChosenAgent.ask(question, {
-        chatId,
-        ignoreScope,
-        type: 'review',
-      } as IAskOptions);
+    if (type === 'question') {
+      const alternative = await chooseAlternativeAgent();
 
-        chatHistory[chatId as string]!.push({
-        agent: 'ai',
-        text: response?.text as string,
-      });
+      if (alternative?.ChosenAgent) {
+        Logger.debug(`Validando resposta com o segundo agente de IA: ${alternative.ChosenAgentName}`);
 
-      fullResponse.response = response;
-    } catch (error) {
-      Logger.error('Erro ao validar resposta com o segundo agente de IA', error);
-    } finally {
-      Logger.debug(JSON.stringify(fullResponse));
-  
-      return fullResponse;
+        const response = await alternative.ChosenAgent.ask(fullResponse.response!, {
+          chatId: chatId as string,
+          ignoreScope: !!ignoreScope,
+          type: 'review',
+        } as IAskOptions) as string | undefined;
+
+        fullResponse.response = response;
+      }
     }
 
+    updateChatHistory(chatId as string, fullResponse.response as string, 'ai');
+
+    return fullResponse;
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 
-    chatHistory[chatId as string]!.push({
-      agent: 'ai',
-      text: 'Unable to answer due to technical issues.',
-      error: error as string,
-    });
+    updateChatHistory(chatId as string, 'Unable to answer due to technical issues.', 'ai');
 
-    if ((error as string).indexOf('You exceeded your current quota') > -1) {
+    if ((
+      (error as { error: { message: string } })
+      .error
+      .message
+    ).indexOf('You exceeded your current quota') > -1
+    ) {
       Logger.warn('Daily quota exceeded');
     }
 
@@ -128,6 +128,6 @@ const ask = async (question: string, {
 const GeminiService = {
   ask,
   status,
-}
+};
 
 export default GeminiService;

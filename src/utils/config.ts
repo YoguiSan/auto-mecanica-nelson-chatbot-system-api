@@ -5,6 +5,8 @@ dotenv.config();
 type Config = {
   AI_URL: string,
   GEMINI_API_KEY: string,
+  GROQ_API_KEY: string,
+  GROQ_BASE_URL: string,
   PORT: string | number,
   ENVIRONMENT: string,
   DEBUG: boolean,
@@ -18,6 +20,8 @@ type Config = {
 const Config = {
   AI_URL: process.env.AI_TOOL_URL,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
+  GROQ_BASE_URL: process.env.GROQ_BASE_URL,
   PORT: process.env.PORT,
   ENVIRONMENT: process.env.ENVIRONMENT,
   DEBUG: (

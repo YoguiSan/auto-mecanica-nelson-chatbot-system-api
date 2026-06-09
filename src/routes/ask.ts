@@ -4,9 +4,7 @@ import { PickAgent } from '../services/agents/index.ts';
 
 const Logger = useLogger('Ask Route');
 
-// FIXME: mocked
-// const { ChosenAgentName: chosenAi } = PickAgent('none');
-const chosenAi = 'gemini';
+const { ChosenAgentName: chosenAi } = PickAgent('none');
 
 app.get('/ask', async (req, res, next) => {
   const { question, chatId, ignoreScope } = req.query;
