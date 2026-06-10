@@ -1,9 +1,10 @@
 import OpenAI from 'openai';
 import type { IAskOptions } from './types.js';
-import { chatHistory, updateChatHistory } from './shared.ts';
+import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
 import useLogger from '../../utils/logger.ts';
 import type { IGroqResponse } from './types/groq.js';
+import { chooseAlternativeAgent } from './shared.ts';
 
 const Logger = useLogger('Groq Service');
 
@@ -31,48 +32,80 @@ const ask = async (question: string, {
   ${input}
   `);
 
-  updateChatHistory(chatId as string, question, 'user');
-
-  const Response = await client.responses.create({
-    model: "openai/gpt-oss-20b",
-    input,
-  });
-
-  Logger.debug(`Groq raw response: ${JSON.stringify(Response)}`);
-
-  const {
-    output,
-  } = Response;
-
-  const [filteredResponse]: IGroqResponse = output.filter((item) => item.type === 'message');
-
-  switch (filteredResponse.status) {
-    case 'completed':
-      // updateChatHistory(chatId as string, response.text, 'agent');
-      filteredResponse.status = 200;
-      break;
-    case 'in_progress':
-      filteredResponse.status = 202;
-      filteredResponse.text = 'Sua pergunta está sendo processada. Por favor, aguarde um momento.';
-      break;
-    case 'incomplete':
-      filteredResponse.status = 500;
-      filteredResponse.text = 'Não consegui processar sua pergunta completamente. Por favor, tente novamente.';
-      break;
-    default:
-      filteredResponse.status = 500;
-      filteredResponse.text = 'Não consigo responder à sua pergunta agora. Por favor, tente novamente mais tarde';
-      break;
-  }
+  const alternative = await chooseAlternativeAgent('groq');
   
-  const formattedResponse = {
-    response: filteredResponse.content.filter(({ type }: { type: string }) => type === 'output_text')[0]?.text || 'Não consegui gerar uma resposta adequada. Por favor, tente novamente.',
-    status: filteredResponse.status,
-    chatId,
-    chatHistory,
-  };
+  updateChatHistory(chatId as string, question, 'user');
+  
+  try {
+    const Response = await client.responses.create({
+      model: "openai/gpt-oss-20b",
+      input,
+    });
 
-  return formattedResponse;
+    Logger.debug(`Groq raw response: ${JSON.stringify(Response)}`);
+  
+    const {
+      output,
+    } = Response;
+  
+    const [filteredResponse]: IGroqResponse = output.filter((item) => item.type === 'message');
+  
+    switch (filteredResponse.status) {
+      case 'completed':
+        // updateChatHistory(chatId as string, response.text, 'agent');
+        filteredResponse.status = 200;
+        break;
+      case 'in_progress':
+        filteredResponse.status = 202;
+        filteredResponse.text = 'Sua pergunta está sendo processada. Por favor, aguarde um momento.';
+        break;
+      case 'incomplete':
+        filteredResponse.status = 500;
+        filteredResponse.text = 'Não consegui processar sua pergunta completamente. Por favor, tente novamente.';
+        break;
+      default:
+        filteredResponse.status = 500;
+        filteredResponse.text = 'Não consigo responder à sua pergunta agora. Por favor, tente novamente mais tarde';
+        break;
+    }
+  
+    let text = filteredResponse.content.filter(({ type }: { type: string }) => type === 'output_text')[0]?.text;
+  
+    if (filteredResponse.status === 200) {
+      try {
+        const {
+          response: validatedResponse,
+        } = await alternative?.ChosenAgent?.ask(question, {
+          chatId: chatId as string,
+          type: 'question',
+        });
+  
+        text = validatedResponse;
+      } catch (err) {
+        Logger.error('Error validating response with alternative agent', err);
+      }
+    }
+    
+    const formattedResponse = {
+      response: text || 'Não consegui gerar uma resposta adequada. Por favor, tente novamente.',
+      status: filteredResponse.status,
+      chatId,
+      chatHistory,
+    };
+  
+    return formattedResponse;
+  } catch (error) {
+    if (alternative?.ChosenAgent) {
+      Logger.debug(`Erro ao fazer consulta. Tentando com outro agente: ${alternative.ChosenAgentName}`);
+
+      return retryWithAlternativeAgent({
+        alternativeAgent: alternative,
+        question,
+        chatId: chatId as string,
+        ignoreScope: ignoreScope!!,
+      });
+    }
+  }
 };
 
 const GroqService = {

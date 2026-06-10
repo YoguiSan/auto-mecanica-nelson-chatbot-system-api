@@ -2,8 +2,9 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../../utils/config.ts';
 import useLogger from '../../utils/logger.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
-import { chatHistory, updateChatHistory } from './shared.ts';
+import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
 import type { IAskOptions } from './types.js';
+import { chooseAlternativeAgent } from './shared.ts';
 
 const Logger = useLogger('Google Gemini Service');
 
@@ -12,23 +13,6 @@ const { GEMINI_API_KEY: apiKey } = Config;
 const ai = new GoogleGenAI({
   apiKey,
 } as GoogleGenAIOptions);
-
-const chooseAlternativeAgent = async () => {
-  const { AIAgents } = await import('./import.ts');
-  const availableAgentKeys = Object.keys(AIAgents).filter((agent) => agent !== 'gemini');
-
-  if (!availableAgentKeys.length) {
-    return null;
-  }
-
-  const ChosenAgentName = availableAgentKeys[Math.floor(Math.random() * availableAgentKeys.length)]!;
-  const ChosenAgent = AIAgents[ChosenAgentName as keyof typeof AIAgents];
-
-  return {
-    ChosenAgent,
-    ChosenAgentName,
-  };
-};
 
 const status = async () => {
   const content = 'This is a request to check the status of our communication. Please respond including the current date and time in ISO format';
@@ -59,18 +43,18 @@ const ask = async (question: string, {
   ${contents}
   `);
 
-  const alternative = await chooseAlternativeAgent();
+  const alternative = await chooseAlternativeAgent('gemini');
 
   updateChatHistory(chatId as string, question, 'user');
 
   try {
     Logger.debug(`
-      Request information: 
+      Request information:
       
       chatId: ${chatId}
       query: ${question}
-      chatHistory (in memory): ${JSON.stringify(chatHistory)}
     `);
+    // chatHistory (in memory): ${JSON.stringify(chatHistory)}
 
     const initialResponse = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -106,7 +90,7 @@ const ask = async (question: string, {
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 
-    updateChatHistory(chatId as string, 'Unable to answer due to technical issues.', 'ai');
+    updateChatHistory(chatId as string, 'Gemini was unable to answer due to technical issues.', 'ai');
 
     if ((
       (error as { error: { message: string } })
@@ -119,20 +103,13 @@ const ask = async (question: string, {
 
     try {
       if (alternative?.ChosenAgent) {
-        Logger.debug(`Erro ao fazer consulta. Tentando com outro agente: ${alternative.ChosenAgentName}`);
-        const response = await alternative.ChosenAgent.ask(question, {
+        Logger.debug(`Erro ao fazer consulta com o Gemini. Tentando com outro agente: ${alternative.ChosenAgentName}`);
+        return retryWithAlternativeAgent({
+          alternativeAgent: alternative,
+          question,
           chatId: chatId as string,
-          ignoreScope: !!ignoreScope,
-        } as IAskOptions) as string | undefined;
-
-        const fullResponse = {
-          status: 200,
-          chatId,
-          response,
-          chatHistory: chatHistory[chatId as string] || [],
-        };
-
-        return fullResponse;
+          ignoreScope: ignoreScope!!,
+        });
       }
     } catch (err) {
       return {
