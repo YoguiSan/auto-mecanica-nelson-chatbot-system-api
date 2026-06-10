@@ -71,16 +71,5 @@
     "top_logprobs": null,
     "max_tool_calls": null,
     "output_text": "Hi. This is a mock response from the AI, generated for development purposes when MOCK_AI_RESPONSES is set to true. The content of this message simulates the kind of detailed and informative answer that the AI would provide in response to a user's question about the engines used in the first generation Fiat Palio. The text includes a comprehensive overview of the different engines that were available for the Palio during its first generation, along with safety tips and instructions on how users can identify their specific engine type. This mock response is designed to help developers test the functionality of the chatbot system without needing to make actual API calls to an AI service."
-  },
-  "chatId": "0c4d3961-19d8-4434-978e-5ce4446d46b1",
-  "chatHistory": [
-    {
-      "agent": "user",
-      "text": "CHAT HISTORY 1"
-    },
-    {
-      "agent": "ai",
-      "text": "CHAT HISTORY 2"
-    }
-  ]
+  }
 }
