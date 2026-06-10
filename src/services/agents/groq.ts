@@ -96,7 +96,7 @@ const ask = async (question: string, {
     return formattedResponse;
   } catch (error) {
     if (alternative?.ChosenAgent) {
-      Logger.debug(`Erro ao fazer consulta. Tentando com outro agente: ${alternative.ChosenAgentName}`);
+      Logger.debug(`Erro ao fazer consulta com o Groq. Tentando com outro agente: ${alternative.ChosenAgentName}`);
 
       return retryWithAlternativeAgent({
         alternativeAgent: alternative,
