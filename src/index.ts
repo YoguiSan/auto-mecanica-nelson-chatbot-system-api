@@ -1,6 +1,7 @@
 import app from './app.ts';
 import Config from './utils/config.ts';
 import useLogger from './utils/logger.ts';
+import './__mocks__/index.ts';
 import './routes/index.ts';
 
 const {

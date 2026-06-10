@@ -26,6 +26,8 @@ app.get('/ask', async (req, res, next) => {
 
       req.url = `/${chosenAi}/ask?${queryParams.toString()}`;
 
+      Logger.debug(`Nova URL para o agente de IA: ${req.url}`);
+
       next('route');
     } catch (error) {
       Logger.error('Erro na chamada', error);

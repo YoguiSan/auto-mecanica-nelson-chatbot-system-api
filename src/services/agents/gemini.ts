@@ -59,6 +59,8 @@ const ask = async (question: string, {
   ${contents}
   `);
 
+  const alternative = await chooseAlternativeAgent();
+
   updateChatHistory(chatId as string, question, 'user');
 
   try {
@@ -85,8 +87,6 @@ const ask = async (question: string, {
     };
 
     if (type === 'question') {
-      const alternative = await chooseAlternativeAgent();
-
       if (alternative?.ChosenAgent) {
         Logger.debug(`Validando resposta com o segundo agente de IA: ${alternative.ChosenAgentName}`);
 
@@ -117,11 +117,30 @@ const ask = async (question: string, {
       Logger.warn('Daily quota exceeded');
     }
 
-    return {
-      status: 500,
-      chatId,
-      response: error,
-    };
+    try {
+      if (alternative?.ChosenAgent) {
+        Logger.debug(`Erro ao fazer consulta. Tentando com outro agente: ${alternative.ChosenAgentName}`);
+        const response = await alternative.ChosenAgent.ask(question, {
+          chatId: chatId as string,
+          ignoreScope: !!ignoreScope,
+        } as IAskOptions) as string | undefined;
+
+        const fullResponse = {
+          status: 200,
+          chatId,
+          response,
+          chatHistory: chatHistory[chatId as string] || [],
+        };
+
+        return fullResponse;
+      }
+    } catch (err) {
+      return {
+        status: 500,
+        chatId,
+        response: err,
+      };
+    }
   }
 };
 

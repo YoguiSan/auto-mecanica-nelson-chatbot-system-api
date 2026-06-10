@@ -2,13 +2,9 @@ import app from '../../app.ts';
 import GeminiService from '../../services/agents/gemini.ts';
 import { simpleSessionId } from '../../utils/crypto.ts';
 import useLogger from '../../utils/logger.ts';
+import type { IQuery } from './query.js';
 
 const Logger = useLogger('Google Gemini Service');
-
-type IQuery = {
-  question: string;
-  type?: 'question' | 'review';
-};
 
 app.get('/gemini/ask', async (req, res) => {
   const {

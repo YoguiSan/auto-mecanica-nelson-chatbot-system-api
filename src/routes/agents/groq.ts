@@ -2,15 +2,11 @@ import app from '../../app.ts';
 import GroqService from '../../services/agents/groq.ts';
 import { simpleSessionId } from '../../utils/crypto.ts';
 import useLogger from '../../utils/logger.ts';
+import type { IQuery } from './query.js';
 
 const Logger = useLogger('Groq Service');
 
-type IQuery = {
-  question: string;
-  type?: 'question' | 'review';
-};
-
-app.get('/grok/ask', async (req, res) => {
+app.get('/groq/ask', async (req, res) => {
   const {
     question,
     type,

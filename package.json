@@ -9,6 +9,7 @@
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.mjs",
     "dev": "nodemon ./src/index.ts",
+    "dev:mock": "MOCK_AI_RESPONSES=true nodemon ./src/index.ts",
     "lint": "npx eslint .",
     "build": "tsc",
     "start": "pm2-runtime start ecosystem.config.cjs --env production --max-restarts=3",
@@ -23,7 +24,7 @@
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^10.0.0",
     "jest": "^25.0.0",
-    "nock": "^14.0.11",
+    "nock": "^14.0.15",
     "nodemon": "^3.1.11",
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
