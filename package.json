@@ -1,0 +1,50 @@
+{
+  "name": "chatbot-system-backend",
+  "version": "1.0.0",
+  "description": "System API para a AMS, que comunica-se com a ferramenta de IA",
+  "license": "ISC",
+  "author": "Nelson Salles de Barros Filho",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.mjs",
+    "dev": "nodemon ./src/index.ts",
+    "lint": "npx eslint .",
+    "build": "tsc",
+    "start": "pm2-runtime start ecosystem.config.cjs --env production --max-restarts=3",
+    "stop": "pm2-runtime stop amn-chatbot-system-api"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.27",
+    "commitizen": "^4.2.4",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^10.0.0",
+    "jest": "^25.0.0",
+    "nock": "^14.0.11",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "@rollup/plugin-commonjs": "29.0.0",
+    "@stencil/react-output-target": "0.5.3",
+    "dotenv": "^17.2.4",
+    "eslint-plugin-react": "7.22.0",
+    "express": "^5.2.1",
+    "jest-cli": "^19.0.2",
+    "next": "16.2.9",
+    "overmind": "^28.2.1",
+    "surge": "0.27.4",
+    "winston": "^3.19.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
