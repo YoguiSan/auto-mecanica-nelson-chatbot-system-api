@@ -4,7 +4,7 @@ import useLogger from '../utils/logger.ts';
 
 const Logger = useLogger('Status Route');
 
-app.get('/status',  (req, res) => {
+app.get('/status', async (req, res) => {
   Logger.debug('Server is still running');
   res.status(200).send('Server is still running');
 });
