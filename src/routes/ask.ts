@@ -1,0 +1,37 @@
+import app from '../app.ts';
+import useLogger from '../utils/logger.ts';
+import { PickAgent } from '../services/agents/index.ts';
+
+const Logger = useLogger('Ask Route');
+
+const { ChosenAgentName: chosenAi } = PickAgent('none');
+
+app.get('/ask', async (req, res, next) => {
+  const { question, chatId, ignoreScope } = req.query;
+
+  if (!question) {
+    res.status(400).send('Nenhuma pergunta foi feita');
+  } else if (question && (question as string).length < 3) {
+    res.status(400).send('Pergunta curta demais');
+  } else {
+    try {
+      Logger.debug(`Redirecionando para o agente de IA: ${chosenAi}`);
+
+      const queryParams = new URLSearchParams({
+        question: question as string,
+        type: 'question',
+        ...(chatId && { chatId: chatId as string }),
+        ...(ignoreScope && { ignoreScope: ignoreScope as string }),
+      });
+
+      req.url = `/${chosenAi}/ask?${queryParams.toString()}`;
+
+      Logger.debug(`Nova URL para o agente de IA: ${req.url}`);
+
+      next('route');
+    } catch (error) {
+      Logger.error('Erro na chamada', error);
+      res.status(500).send('Não consigo responder à sua pergunta agora. Por favor, tente novamente mais tarde');
+    }
+  }
+});

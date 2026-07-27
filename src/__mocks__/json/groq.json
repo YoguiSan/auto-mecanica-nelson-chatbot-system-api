@@ -1,0 +1,75 @@
+{
+  "response": {
+    "id": "resp_id000000000000000000000000",
+    "object": "response",
+    "status": "completed",
+    "created_at": 1781029246,
+    "output": [
+      {
+        "type": "reasoning",
+        "id": "resp_id000000000000000000000000",
+        "status": "completed",
+        "content": [
+          {
+            "type": "reasoning_text",
+            "text": "This is a mock text to be provided as the AI response during development when MOCK_AI_RESPONSES is set to true. It simulates the reasoning process of the AI, providing a detailed analysis of the user's question and the junior mechanic's answer. The reasoning includes checking the accuracy of the information provided, identifying any inaccuracies or missing details, and ensuring that the tone and content of the response adhere to guidelines. The final output is a revised answer that corrects any errors and provides a more precise and helpful response to the user's question about the engines used in the first generation Fiat Palio."
+          }
+        ],
+        "summary": []
+      },
+      {
+        "type": "message",
+        "id": "msg_id000000000000000000000000",
+        "status": "completed",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "Hi. This is a mock response from the AI, generated for development purposes when MOCK_AI_RESPONSES is set to true. The content of this message simulates the kind of detailed and informative answer that the AI would provide in response to a user's question about the engines used in the first generation Fiat Palio. The text includes a comprehensive overview of the different engines that were available for the Palio during its first generation, along with safety tips and instructions on how users can identify their specific engine type. This mock response is designed to help developers test the functionality of the chatbot system without needing to make actual API calls to an AI service.",
+            "annotations": [],
+            "logprobs": null
+          }
+        ]
+      }
+    ],
+    "previous_response_id": null,
+    "model": "openai/gpt-oss-20b",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "max_output_tokens": null,
+    "text": {
+      "format": {
+        "type": "text"
+      }
+    },
+    "tools": [],
+    "tool_choice": "auto",
+    "truncation": "disabled",
+    "metadata": {},
+    "groq": null,
+    "temperature": 1,
+    "top_p": 1,
+    "user": null,
+    "service_tier": "default",
+    "background": false,
+    "error": null,
+    "incomplete_details": null,
+    "usage": {
+      "input_tokens": 951,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens": 1655,
+      "output_tokens_details": {
+        "reasoning_tokens": 1047
+      },
+      "total_tokens": 2606
+    },
+    "parallel_tool_calls": true,
+    "store": false,
+    "top_logprobs": null,
+    "max_tool_calls": null,
+    "output_text": "Hi. This is a mock response from the AI, generated for development purposes when MOCK_AI_RESPONSES is set to true. The content of this message simulates the kind of detailed and informative answer that the AI would provide in response to a user's question about the engines used in the first generation Fiat Palio. The text includes a comprehensive overview of the different engines that were available for the Palio during its first generation, along with safety tips and instructions on how users can identify their specific engine type. This mock response is designed to help developers test the functionality of the chatbot system without needing to make actual API calls to an AI service."
+  }
+}
