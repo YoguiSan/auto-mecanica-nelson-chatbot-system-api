@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { IAskOptions } from './types.js';
+import type { IAskOptions, IAgentResponse } from './types.js';
 import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
 import useLogger from '../../utils/logger.ts';
@@ -21,7 +21,9 @@ const ask = async (question: string, {
   chatId,
   ignoreScope,
   type = 'question',
-}: IAskOptions) => {
+}: IAskOptions): Promise<IAgentResponse> => {
+  let formattedResponse;
+
   const input = assembleQuestion(question, {
     chatId: chatId!,
     chatHistory,
@@ -48,7 +50,7 @@ const ask = async (question: string, {
       output,
     } = Response;
   
-    const [filteredResponse]: IGroqResponse = output.filter((item) => item.type === 'message');
+    const [filteredResponse]: IGroqResponse = output.filter((item) => item.type === 'message') as IGroqResponse;
   
     switch (filteredResponse.status) {
       case 'completed':
@@ -78,7 +80,7 @@ const ask = async (question: string, {
         } = await alternative?.ChosenAgent?.ask(question, {
           chatId: chatId as string,
           type: 'question',
-        });
+        }) as { response: unknown };
   
         text = validatedResponse;
       } catch (err) {
@@ -86,19 +88,17 @@ const ask = async (question: string, {
       }
     }
     
-    const formattedResponse = {
+    formattedResponse = {
       response: text || 'Não consegui gerar uma resposta adequada. Por favor, tente novamente.',
       status: filteredResponse.status,
       chatId,
       chatHistory,
     };
-  
-    return formattedResponse;
   } catch (error) {
     if (alternative?.ChosenAgent) {
       Logger.debug(`Erro ao fazer consulta com o Groq. Tentando com outro agente: ${alternative.ChosenAgentName}`);
 
-      return retryWithAlternativeAgent({
+      formattedResponse = await retryWithAlternativeAgent({
         alternativeAgent: alternative,
         question,
         chatId: chatId as string,
@@ -106,6 +106,8 @@ const ask = async (question: string, {
       });
     }
   }
+
+  return formattedResponse as IAgentResponse;
 };
 
 const GroqService = {

@@ -22,3 +22,10 @@ type IAIAgent = {
 export type IAIAgents = {
   [key: string]: IAIAgent;
 };
+
+export type IAgentResponse = {
+  status: number,
+  response: string,
+  chatId: string | undefined,
+  chatHistory?: unknown,
+};
