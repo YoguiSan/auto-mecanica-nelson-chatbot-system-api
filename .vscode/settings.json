@@ -1,5 +1,6 @@
 {
     "conventionalCommits.scopes": [
-        "AI agents"
+      "AI agents",
+      "PM2 Config"
     ]
 }
