@@ -11,7 +11,7 @@
     "dev": "nodemon ./src/index.ts",
     "dev:mock": "MOCK_AI_RESPONSES=true nodemon ./src/index.ts",
     "lint": "npx eslint .",
-    "build": "npx esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js",
+    "build": "npx esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs",
     "start:local": "pm2-runtime start ecosystem.config.cjs",
     "start": "pm2-runtime start prod-ecosystem.config.cjs",
     "stop": "pm2-runtime stop amn-chatbot-system-api",
