@@ -46,34 +46,37 @@ const ask = async (question: string, {
 
     Logger.debug(`Groq raw response: ${JSON.stringify(Response)}`);
   
-    const {
-      output,
-    } = Response;
-  
-    const [filteredResponse]: IGroqResponse = output.filter((item) => item.type === 'message') as IGroqResponse;
-  
+    const { output } = Response;
+
+    type IGroqResponseOutputItem = NonNullable<IGroqResponse['output']>[number];
+    const [filteredResponse] = output.filter((item) => item.type === 'message') as IGroqResponseOutputItem[];
+
+    if (!filteredResponse) {
+      throw new Error('Groq response did not contain a message output');
+    }
+
+    let responseStatus = 500;
+    let text = filteredResponse.content.filter(({ type }: { type: string }) => type === 'output_text')[0]?.text;
+
     switch (filteredResponse.status) {
       case 'completed':
-        // updateChatHistory(chatId as string, response.text, 'agent');
-        filteredResponse.status = 200;
+        responseStatus = 200;
         break;
       case 'in_progress':
-        filteredResponse.status = 202;
-        filteredResponse.text = 'Sua pergunta está sendo processada. Por favor, aguarde um momento.';
+        responseStatus = 202;
+        text = 'Sua pergunta está sendo processada. Por favor, aguarde um momento.';
         break;
       case 'incomplete':
-        filteredResponse.status = 500;
-        filteredResponse.text = 'Não consegui processar sua pergunta completamente. Por favor, tente novamente.';
+        responseStatus = 500;
+        text = 'Não consegui processar sua pergunta completamente. Por favor, tente novamente.';
         break;
       default:
-        filteredResponse.status = 500;
-        filteredResponse.text = 'Não consigo responder à sua pergunta agora. Por favor, tente novamente mais tarde';
+        responseStatus = 500;
+        text = 'Não consigo responder à sua pergunta agora. Por favor, tente novamente mais tarde';
         break;
     }
   
-    let text = filteredResponse.content.filter(({ type }: { type: string }) => type === 'output_text')[0]?.text;
-  
-    if (filteredResponse.status === 200) {
+    if ((filteredResponse.status) as unknown as number === 200) {
       try {
         const {
           response: validatedResponse,
@@ -82,7 +85,7 @@ const ask = async (question: string, {
           type: 'question',
         }) as { response: unknown };
   
-        text = validatedResponse;
+        text = validatedResponse as string;
       } catch (err) {
         Logger.error('Error validating response with alternative agent', err);
       }

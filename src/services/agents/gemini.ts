@@ -123,7 +123,7 @@ const ask = async (question: string, {
     }
   }
 
-  return fullResponse as IAgentResponse;
+  return formattedResponse as IAgentResponse;
 };
 
 const GeminiService = {
