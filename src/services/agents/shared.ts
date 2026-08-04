@@ -50,7 +50,7 @@ export const retryWithAlternativeAgent = async ({
   const response = await alternativeAgent.ChosenAgent.ask(question, {
     chatId: chatId as string,
     ignoreScope: !!ignoreScope,
-  } as IAskOptions) as string | undefined;
+  } as IAskOptions) as string;
 
   const fullResponse = {
     status: 200,

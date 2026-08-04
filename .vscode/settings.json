@@ -1,6 +1,7 @@
 {
     "conventionalCommits.scopes": [
       "AI agents",
-      "PM2 Config"
+      "PM2 Config",
+      "Typescript"
     ]
 }

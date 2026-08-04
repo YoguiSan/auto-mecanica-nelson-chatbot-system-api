@@ -1,18 +1,19 @@
 import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../utils/config.ts';
 import useLogger from '../utils/logger.ts';
+import type { IAgentResponse } from './agents/types.js';
 
-export type ChatMessage = {
+export type IChatMessage = {
   agent?: 'user' | 'ai';
   text?: string;
   error?: string;
 };
 
-export type ChatHistoryType = {
-  [chatId: string]: ChatMessage[];
+export type IChatHistory = {
+  [chatId: string]: IChatMessage[];
 };
 
-let chatHistory: ChatHistoryType = {};
+let chatHistory: IChatHistory = {};
 
 const Logger = useLogger('Google Gemini Service');
 
@@ -28,7 +29,7 @@ const status = async () => {
   return ask(content, undefined, true);
 };
 
-const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => {
+const ask = async (question: string, chatId?: string, ignoreScope?: boolean): Promise<IAgentResponse> => {
   const scope = `Scope: you are a mechanic from São Paulo, Brazil.
   The application we're running is for an auto repair shop located in the same city.
   Your job is to answer to simple doubts customers might have, or guide them on possible causes on the issues they report in their cars, and also guide them on the services we offer (listed below).
@@ -52,7 +53,7 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
       ${chatHistory[chatId as string]!.map(({
         agent,
         text,
-      }: ChatMessage) => `${
+      }: IChatMessage) => `${
         agent === 'user'
         ? 'User asked'
         : 'You replied'
@@ -119,7 +120,7 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
 
     Logger.debug(JSON.stringify(fullResponse));
 
-    return fullResponse;
+    return fullResponse as unknown as IAgentResponse;
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 
@@ -136,7 +137,7 @@ const ask = async (question: string, chatId?: string, ignoreScope?: boolean) => 
     return {
       status: 500,
       chatId,
-      response: error,
+      response: error as string,
     };
   }
 };

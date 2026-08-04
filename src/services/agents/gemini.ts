@@ -3,7 +3,7 @@ import Config from '../../utils/config.ts';
 import useLogger from '../../utils/logger.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
 import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
-import type { IAskOptions } from './types.js';
+import type { IAskOptions, IAgentResponse } from './types.js';
 import { chooseAlternativeAgent } from './shared.ts';
 
 const Logger = useLogger('Google Gemini Service');
@@ -26,7 +26,9 @@ const ask = async (question: string, {
   chatId,
   ignoreScope,
   type = 'question',
-}: IAskOptions) => {
+}: IAskOptions): Promise<IAgentResponse> => {
+  let formattedResponse;
+
   const scope = assembleQuestion(question, {
     chatId: chatId!,
     chatHistory,
@@ -66,7 +68,7 @@ const ask = async (question: string, {
     const fullResponse = {
       status: 200,
       chatId,
-      response: initialResponse.text,
+      response: initialResponse.text as string,
       chatHistory: chatHistory[chatId as string] || [],
     };
 
@@ -80,13 +82,13 @@ const ask = async (question: string, {
           type: 'review',
         } as IAskOptions) as string | undefined;
 
-        fullResponse.response = response;
+        fullResponse.response = response as string;
       }
     }
 
     updateChatHistory(chatId as string, fullResponse.response as string, 'ai');
 
-    return fullResponse;
+    formattedResponse = fullResponse;
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 
@@ -104,7 +106,8 @@ const ask = async (question: string, {
     try {
       if (alternative?.ChosenAgent) {
         Logger.debug(`Erro ao fazer consulta com o Gemini. Tentando com outro agente: ${alternative.ChosenAgentName}`);
-        return retryWithAlternativeAgent({
+
+        formattedResponse = await retryWithAlternativeAgent({
           alternativeAgent: alternative,
           question,
           chatId: chatId as string,
@@ -112,13 +115,15 @@ const ask = async (question: string, {
         });
       }
     } catch (err) {
-      return {
+      formattedResponse = {
         status: 500,
-        chatId,
-        response: err,
+        chatId: chatId as string,
+        response: err as string,
       };
     }
   }
+
+  return formattedResponse as IAgentResponse;
 };
 
 const GeminiService = {
