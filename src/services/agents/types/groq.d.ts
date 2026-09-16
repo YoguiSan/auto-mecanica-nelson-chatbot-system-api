@@ -1,6 +1,6 @@
 export type IGroqResponse = {
-  status: 'completed' | 'in_progress' | 'incomplete';
-  output: Array<{
+  status?: 'completed' | 'in_progress' | 'incomplete' | number;
+  output?: Array<{
     type: string,
     id: string,
     status: 'completed' | 'in_progress' | 'incomplete',
