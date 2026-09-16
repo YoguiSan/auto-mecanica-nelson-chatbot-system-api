@@ -12,9 +12,10 @@
     "dev:mock": "MOCK_AI_RESPONSES=true nodemon ./src/index.ts",
     "lint": "npx eslint .",
     "build": "tsc",
-    "start": "pm2-runtime start ecosystem.config.cjs --env production --max-restarts=3",
+    "start": "pm2-runtime start ecosystem.config.cjs --env production",
     "stop": "pm2-runtime stop amn-chatbot-system-api",
-    "set:agent": "mkdir .github & mkdir .github/agents & cp \"../ai-agents/backend/Node.js backend.agent.md\" .github/agents/AGENTS.md"
+    "set:agent": "mkdir .github & mkdir .github/agents & cp \"../ai-agents/backend/Node.js backend.agent.md\" .github/agents/AGENTS.md",
+    "docker": "docker build --no-cache ."
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -38,6 +39,7 @@
     "jest-cli": "19.0.2",
     "openai": "^6.42.0",
     "overmind": "^28.2.1",
+    "pm2-runtime": "^5.4.1",
     "winston": "^3.19.0"
   },
   "config": {

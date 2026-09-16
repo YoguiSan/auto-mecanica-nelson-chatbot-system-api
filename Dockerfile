@@ -10,7 +10,7 @@ COPY . .
 # Install application dependencies
 RUN npm install --legacy-peer-deps
 
-# Expose port 3000 to the outside world
+# Expose port 4000 to the outside world
 EXPOSE 4000
 
 # Define the command to run the application
