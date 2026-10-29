@@ -1,6 +1,11 @@
 import OpenAI from 'openai';
 import type { IAskOptions, IAgentResponse } from './types.js';
-import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
+import {
+  chatHistory,
+  loadChatHistory,
+  retryWithAlternativeAgent,
+  saveChatExchange,
+} from './shared.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
 import useLogger from '../../utils/logger.ts';
 import type { IGroqResponse } from './types/groq.js';
@@ -24,6 +29,8 @@ const ask = async (question: string, {
 }: IAskOptions): Promise<IAgentResponse> => {
   let formattedResponse;
 
+  await loadChatHistory(chatId);
+
   const input = assembleQuestion(question, {
     chatId: chatId!,
     chatHistory,
@@ -35,8 +42,6 @@ const ask = async (question: string, {
   `);
 
   const alternative = await chooseAlternativeAgent('groq');
-  
-  updateChatHistory(chatId as string, question, 'user');
   
   try {
     const Response = await client.responses.create({
@@ -76,16 +81,19 @@ const ask = async (question: string, {
         break;
     }
   
-    if ((filteredResponse.status) as unknown as number === 200) {
+    if (filteredResponse.status === 'completed' && alternative?.ChosenAgent) {
       try {
         const {
           response: validatedResponse,
-        } = await alternative?.ChosenAgent?.ask(question, {
+        } = await alternative.ChosenAgent.ask(text || question, {
           chatId: chatId as string,
-          type: 'question',
+          ignoreScope: !!ignoreScope,
+          type: 'review',
         }) as { response: unknown };
   
-        text = validatedResponse as string;
+        if (typeof validatedResponse === 'string') {
+          text = validatedResponse;
+        }
       } catch (err) {
         Logger.error('Error validating response with alternative agent', err);
       }
@@ -93,10 +101,18 @@ const ask = async (question: string, {
     
     formattedResponse = {
       response: text || 'Não consegui gerar uma resposta adequada. Por favor, tente novamente.',
-      status: filteredResponse.status,
+      status: responseStatus,
       chatId,
-      chatHistory,
+      chatHistory: chatHistory[chatId as string] || [],
     };
+
+    if (type === 'question' && responseStatus === 200) {
+      formattedResponse.chatHistory = await saveChatExchange(
+        chatId,
+        question,
+        formattedResponse.response,
+      );
+    }
   } catch (error) {
     if (alternative?.ChosenAgent) {
       Logger.debug(`Erro ao fazer consulta com o Groq. Tentando com outro agente: ${alternative.ChosenAgentName}`);

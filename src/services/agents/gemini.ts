@@ -2,7 +2,7 @@ import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
 import Config from '../../utils/config.ts';
 import useLogger from '../../utils/logger.ts';
 import { assembleQuestion } from '../../utils/questions.ts';
-import { chatHistory, retryWithAlternativeAgent, updateChatHistory } from './shared.ts';
+import { chatHistory, loadChatHistory, retryWithAlternativeAgent, saveChatExchange } from './shared.ts';
 import type { IAskOptions, IAgentResponse } from './types.js';
 import { chooseAlternativeAgent } from './shared.ts';
 
@@ -29,6 +29,8 @@ const ask = async (question: string, {
 }: IAskOptions): Promise<IAgentResponse> => {
   let formattedResponse;
 
+  await loadChatHistory(chatId);
+
   const scope = assembleQuestion(question, {
     chatId: chatId!,
     chatHistory,
@@ -46,8 +48,6 @@ const ask = async (question: string, {
   `);
 
   const alternative = await chooseAlternativeAgent('gemini');
-
-  updateChatHistory(chatId as string, question, 'user');
 
   try {
     Logger.debug(`
@@ -76,30 +76,38 @@ const ask = async (question: string, {
       if (alternative?.ChosenAgent) {
         Logger.debug(`Validando resposta com o segundo agente de IA: ${alternative.ChosenAgentName}`);
 
-        const response = await alternative.ChosenAgent.ask(fullResponse.response!, {
+        const reviewResult = await alternative.ChosenAgent.ask(fullResponse.response!, {
           chatId: chatId as string,
           ignoreScope: !!ignoreScope,
           type: 'review',
-        } as IAskOptions) as string | undefined;
+        } as IAskOptions);
 
-        fullResponse.response = response as string;
+        if (typeof reviewResult === 'string') {
+          fullResponse.response = reviewResult;
+        } else if (
+          typeof reviewResult === 'object'
+          && reviewResult !== null
+          && 'response' in reviewResult
+          && typeof reviewResult.response === 'string'
+        ) {
+          fullResponse.response = reviewResult.response;
+        }
       }
-    }
 
-    updateChatHistory(chatId as string, fullResponse.response as string, 'ai');
+      fullResponse.chatHistory = await saveChatExchange(
+        chatId,
+        question,
+        fullResponse.response as string,
+      );
+    }
 
     formattedResponse = fullResponse;
   } catch (error) {
     Logger.error('Error getting response from Gemini', error);
 
-    updateChatHistory(chatId as string, 'Gemini was unable to answer due to technical issues.', 'ai');
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if ((
-      (error as { error: { message: string } })
-      .error
-      .message
-    ).indexOf('You exceeded your current quota') > -1
-    ) {
+    if (errorMessage.includes('You exceeded your current quota')) {
       Logger.warn('Daily quota exceeded');
     }
 

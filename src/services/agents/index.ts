@@ -1,6 +1,6 @@
 import useLogger from '../../utils/logger.ts';
 import { AIAgents } from './import.ts';
-import { chatHistory, updateChatHistory } from './shared.ts';
+import { chatHistory, loadChatHistory, saveChatExchange } from './shared.ts';
 
 const Logger = useLogger('AI Agent Selection');
 
@@ -33,5 +33,6 @@ export const PickAgent = (agentToExclude: string): {
 
 export {
   chatHistory,
-  updateChatHistory,
+  loadChatHistory,
+  saveChatExchange,
 };

@@ -1,22 +1,71 @@
-import type { IAskOptions, IChatHistory } from './types.d.ts';
+import type { IAskOptions, IChatHistory, IChatMessage, IAgentResponse } from './types.d.ts';
+import { getRedisValue, setRedisValue } from '../../utils/redis.ts';
+import useLogger from '../../utils/logger.ts';
 
 export let chatHistory: IChatHistory = {};
 
-export const updateChatHistory = (
-  chatId: string,
-  text: string,
-  agent: 'user' | 'ai',
-) => {
-  if (chatId && !chatHistory[chatId]) {
-    chatHistory[chatId] = [];
+const Logger = useLogger('Chat History');
+const redisKey = (chatId: string) => `chatbot:chat-history:${chatId}`;
+
+const isChatMessageList = (value: unknown): value is IChatMessage[] => (
+  Array.isArray(value)
+  && value.every((message) => (
+    typeof message === 'object'
+    && message !== null
+    && 'agent' in message
+    && (message.agent === 'user' || message.agent === 'ai')
+    && 'text' in message
+    && typeof message.text === 'string'
+  ))
+);
+
+export const loadChatHistory = async (chatId?: string): Promise<IChatMessage[]> => {
+  if (!chatId) {
+    return [];
   }
 
-  if (chatId) {
-    chatHistory[chatId]!.push({
-      agent,
-      text,
-    });
+  try {
+    const cachedHistory = await getRedisValue(redisKey(chatId));
+
+    if (cachedHistory !== null) {
+      const parsedHistory: unknown = JSON.parse(cachedHistory);
+
+      if (!isChatMessageList(parsedHistory)) {
+        throw new Error('Redis chat history has an invalid format');
+      }
+
+      chatHistory[chatId] = parsedHistory;
+    }
+  } catch (error) {
+    Logger.warn('Unable to retrieve chat history from Redis; using in-memory history', error);
   }
+
+  return chatHistory[chatId] ?? [];
+};
+
+export const saveChatExchange = async (
+  chatId: string | undefined,
+  question: string,
+  answer: string,
+): Promise<IChatMessage[]> => {
+  if (!chatId) {
+    return [];
+  }
+
+  const history = chatHistory[chatId] ?? [];
+  history.push(
+    { agent: 'user', text: question },
+    { agent: 'ai', text: answer },
+  );
+  chatHistory[chatId] = history;
+
+  try {
+    await setRedisValue(redisKey(chatId), JSON.stringify(history));
+  } catch (error) {
+    Logger.warn('Unable to store chat history in Redis; keeping it in memory', error);
+  }
+
+  return history;
 };
 
 export const chooseAlternativeAgent = async (agentToExclude: string) => {
@@ -47,16 +96,20 @@ export const retryWithAlternativeAgent = async ({
   chatId: string;
   ignoreScope: boolean;
 }) => {
-  const response = await alternativeAgent.ChosenAgent.ask(question, {
+  const agentResponse = await alternativeAgent.ChosenAgent.ask(question, {
     chatId: chatId as string,
     ignoreScope: !!ignoreScope,
-  } as IAskOptions) as string;
+  } as IAskOptions) as IAgentResponse | string;
+  const response = typeof agentResponse === 'string'
+    ? agentResponse
+    : agentResponse.response;
+  const history = await loadChatHistory(chatId);
 
   const fullResponse = {
-    status: 200,
+    status: typeof agentResponse === 'string' ? 200 : agentResponse.status,
     chatId,
     response,
-    chatHistory: chatHistory[chatId as string] || [],
+    chatHistory: history,
   };
 
   return fullResponse;

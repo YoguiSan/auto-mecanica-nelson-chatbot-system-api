@@ -8,6 +8,7 @@ type Config = {
   GROQ_API_KEY: string,
   GEMINI_BASE_URL: string,
   GROQ_BASE_URL: string,
+  REDIS_URL: string,
   PORT: string | number,
   ENVIRONMENT: string,
   DEBUG: boolean,
@@ -25,6 +26,7 @@ const Config = {
   GROQ_API_KEY: process.env.GROQ_API_KEY,
   GEMINI_BASE_URL: process.env.GEMINI_BASE_URL,
   GROQ_BASE_URL: process.env.GROQ_BASE_URL,
+  REDIS_URL: process.env.REDIS_URL,
   PORT: process.env.PORT,
   ENVIRONMENT: process.env.ENVIRONMENT,
   DEBUG: (

@@ -37,7 +37,7 @@ const useLogger = (moduleName: string) => {
     log: (message: string) => log(moduleName, 'log', message),
     info: (message: string) => log(moduleName, 'log', message),
     debug: (message: string) => log(moduleName, 'debug', message),
-    warn: (message: string) => log(moduleName, 'warn', message),
+    warn: (message: string, error?: unknown) => log(moduleName, 'warn', message, error),
   }
 };
 
